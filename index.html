@@ -119,21 +119,6 @@
   tr.today{background:#fff9db;font-weight:700;}
   tr.today td:first-child{color:var(--green-dark);}
 
-  input.editCell{
-    width:100%;
-    padding:5px 3px;
-    font-size:.78rem;
-    border:1px solid #cfe3cf;
-    border-radius:6px;
-    text-align:center;
-    font-family:inherit;
-  }
-  input.editCell:focus{
-    outline:none;
-    border-color:var(--green);
-    background:var(--green-light);
-  }
-
   .section-title{
     font-weight:700;
     color:var(--green-dark);
@@ -203,13 +188,14 @@
 
 <div class="card">
   <p class="section-title">⚙️ Dejinta</p>
-  <p class="sub">Dooro inta jeer ee cod-xasuusinta la soo celinayo habeenkii. Toddobaadka wuu is-beddelaa otomaatig ah asboowc kasta (Xaaris ↔ Yaxye), mana u baahna in gacanta lagu beddelo.</p>
+  <p class="sub">Toddobaadka waa GACAN LOO DOORTAY — ma is-beddesho otomaatig ahaan. Dooro toddobaadka saxda ah, kadibna wuu sii ahaanayaa isla toddobaadkaas ilaa aad beddesho.</p>
 
   <div id="settingsFields" style="margin-top:10px;">
-    <label class="field-label">Toddobaadka Hadda (habeenka Jimcaha) — otomaatig ahaan ayuu isu beddelaa, lama taaban karo gacanta:</label>
-    <div style="background:var(--green-light);border:1px solid #cfe3cf;border-radius:10px;padding:10px 12px;font-weight:700;color:var(--green-dark);font-size:.9rem;" id="weekDisplay">
-      Toddobaadka 2 — Dr. Yaxye
-    </div>
+    <label class="field-label">Toddobaadka Habeenka Jimcaha:</label>
+    <select id="weekSelect" onchange="onWeekChange()">
+      <option value="1">Toddobaadka 1 — Dr. Xaaris</option>
+      <option value="2">Toddobaadka 2 — Dr. Yaxye</option>
+    </select>
 
     <div style="margin-top:12px;">
       <label class="field-label">Cod-xasuusinta habeenka (Habeen) — inta jeer:</label>
@@ -231,8 +217,7 @@
     </div>
 
     <p class="sub" style="margin-top:14px;">
-      ✏️ Waxaad si toos ah uga beddeli kartaa magacyada jadwalka labada
-      miis hoose (taabo goobta magaca, isbeddel, kadibna riix "Kaydi Isbadelada").
+      🔒 Jadwalka magacyada hoose waa go'an yahay (fixed) — lama beddeli karo.
     </p>
   </div>
 </div>
@@ -247,14 +232,12 @@
   <table id="table2"></table>
 </div>
 
-<div class="card" id="saveEditsCard">
-  <p class="section-title">✏️ Kaydinta Isbadelada Jadwalka</p>
-  <p class="sub">Marka aad dhamaystirto isbadelada magacyada ee labada miis kore, riix kaydi si loo hayo.</p>
-  <div class="row" id="saveEditsRow">
-    <button class="gold" onclick="saveAllEdits()">💾 Kaydi Isbadelada Dhamaan</button>
-    <button class="secondary" onclick="resetToDefault()">♻️ Ku Celi Qaabkii Hore</button>
+<div class="card">
+  <p class="section-title">⬇️ Kaydinta App-ka</p>
+  <p class="sub">Riix badhanka hoose si aad u soo dagsato (download) nuqul buuxa oo app-kan ah oo aad u keydsan karto taleefankaaga.</p>
+  <div class="row">
+    <button class="gold" onclick="downloadApp()">⬇️ Download App-ka (HTML)</button>
   </div>
-
 </div>
 
 <div class="card">
@@ -267,7 +250,7 @@
 </p>
 
 <script>
-// ---------- SCHEDULE DATA ----------
+// ---------- SCHEDULE DATA (FIXED — cannot be edited from the UI) ----------
 const days = ["Sabti","Axad","Isniin","Talaado","Arbaco","Khamiis","Jimce"];
 // JS getDay(): 0=Sunday...6=Saturday. Map to our days array index.
 const jsDayToIndex = {6:0, 0:1, 1:2, 2:3, 3:4, 4:5, 5:6}; // Sat=0 ... Fri=6
@@ -282,79 +265,30 @@ const baseSchedule = {
   "Jimce":   {maalin:"Ciise", galab:"Ciise", habeen:null} // habeenka wuxuu ku xiran yahay toddobaadka
 };
 
-// ---------- CUSTOM (EDITED) SCHEDULE PERSISTENCE ----------
-function loadCustomSchedule(){
-  try{
-    return JSON.parse(localStorage.getItem('bx_customSchedule') || 'null');
-  }catch(e){ return null; }
-}
-function saveCustomSchedule(custom){
-  localStorage.setItem('bx_customSchedule', JSON.stringify(custom));
-}
-let customSchedule = loadCustomSchedule(); // { "1": {day:{maalin,galab,habeen}}, "2": {...} } ama null
-
 function getSchedule(week){
-  if(customSchedule && customSchedule[String(week)]){
-    return JSON.parse(JSON.stringify(customSchedule[String(week)]));
-  }
   const sched = JSON.parse(JSON.stringify(baseSchedule));
   sched["Jimce"].habeen = (week==1) ? "Dr. Xaaris" : "Dr. Yaxye";
   return sched;
 }
 
 // ---------- STATE ----------
-let currentWeek = localStorage.getItem('bx_week') || "2";
+let currentWeek = localStorage.getItem('bx_week') || "2"; // manually chosen, never auto-switches
 let nightInterval = parseInt(localStorage.getItem('bx_nightInterval') || "15");
 let dayInterval = parseInt(localStorage.getItem('bx_dayInterval') || "60");
 let notifTimer = null;
-let isUnlocked = true; // wax password ah lama baahna hadda — waa la dhamaystiray isbeddelka
 let myName = localStorage.getItem('bx_myName') || null;
 
 document.getElementById('nightInterval').value = nightInterval;
 document.getElementById('dayInterval').value = dayInterval;
+document.getElementById('weekSelect').value = currentWeek;
 
-// ---------- AUTO WEEK ALTERNATION (isbeddelka otomaatig ah) ----------
-// Toddobaadka (Xaaris/Yaxye) wuu is-beddelaa asboowc kasta, iyada oo lagu
-// salaynayo lambarka toddobaadka ISO ee kalandarka — looma baahna in mar
-// walba gacanta lagu beddelo.
-function getISOWeekNumber(date){
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = (d.getUTCDay() + 6) % 7; // Isniin=0 ... Axad=6
-  d.setUTCDate(d.getUTCDate() - dayNum + 3);
-  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
-  const diff = d - firstThursday;
-  return 1 + Math.round(diff / (7*24*3600*1000));
-}
-
-function computeAutoWeek(){
-  const isoWeek = getISOWeekNumber(new Date());
-  const anchorIso = parseInt(localStorage.getItem('bx_anchorIsoWeek'), 10);
-  const anchorWeek = localStorage.getItem('bx_anchorWeek');
-  if(!anchorIso || !anchorWeek) return null;
-  const diff = isoWeek - anchorIso;
-  const flips = ((diff % 2) + 2) % 2;
-  return flips === 0 ? anchorWeek : (anchorWeek === "1" ? "2" : "1");
-}
-
-function setWeekAnchor(weekValue){
-  localStorage.setItem('bx_anchorIsoWeek', String(getISOWeekNumber(new Date())));
-  localStorage.setItem('bx_anchorWeek', weekValue);
-}
-
-function applyAutoWeek(){
-  let auto = computeAutoWeek();
-  if(auto === null){
-    // Weli lama dejin anchor-ka — ka dhig toddobaadka hadda ee la doortay ("2" — Yaxye) tan la bilaabayo.
-    auto = currentWeek;
-    setWeekAnchor(auto);
-  }
-  if(auto !== currentWeek){
-    currentWeek = auto;
-    localStorage.setItem('bx_week', currentWeek);
-  }
-  document.getElementById('weekDisplay').textContent =
-    (currentWeek == "1") ? "Toddobaadka 1 — Dr. Xaaris" : "Toddobaadka 2 — Dr. Yaxye";
+// ---------- MANUAL WEEK SELECTION (no auto alternation) ----------
+function onWeekChange(){
+  currentWeek = document.getElementById('weekSelect').value;
+  localStorage.setItem('bx_week', currentWeek);
+  refresh();
   syncConfigToSW();
+  log("Toddobaadka waxaa gacanta loo beddelay: Toddobaadka " + currentWeek);
 }
 
 // ---------- WHO AM I (magaca isticmaalaha) ----------
@@ -400,8 +334,6 @@ if(!myName){
   document.getElementById('myNameLabel').textContent = myName;
 }
 
-
-
 function saveSettings(){
   nightInterval = parseInt(document.getElementById('nightInterval').value);
   dayInterval = parseInt(document.getElementById('dayInterval').value);
@@ -413,29 +345,23 @@ function saveSettings(){
   log("Dejinta xasuusinta waa la cusboonaysiiyay.");
 }
 
-// ---------- EDITING THE SCHEDULE NAMES ----------
-function saveAllEdits(){
-  const custom = {"1":{}, "2":{}};
-  document.querySelectorAll('.editCell').forEach(inp=>{
-    const week = inp.dataset.week;
-    const day = inp.dataset.day;
-    const shift = inp.dataset.shift;
-    if(!custom[week][day]) custom[week][day] = {};
-    custom[week][day][shift] = inp.value.trim();
-  });
-  customSchedule = custom;
-  saveCustomSchedule(customSchedule);
-  refresh();
-  syncConfigToSW();
-  log("Jadwalka magacyada waa la kaydiyay ✅");
-}
-
-function resetToDefault(){
-  customSchedule = null;
-  localStorage.removeItem('bx_customSchedule');
-  refresh();
-  syncConfigToSW();
-  log("Jadwalka waxaa loo celiyay qaabkiisii hore (default-ka).");
+// ---------- DOWNLOAD THE APP ITSELF ----------
+function downloadApp(){
+  try{
+    const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    const blob = new Blob([html], {type: "text/html"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "jadwalka-daryeelka-aabe.html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    log("App-ka waa la soo dejiyay (downloaded) ✅");
+  }catch(e){
+    log("Khalad ayaa dhacay marka la soo dejinayay: " + e.message);
+  }
 }
 
 // ---------- SHIFT LOGIC ----------
@@ -472,7 +398,6 @@ function getCurrentShiftInfo(){
 }
 
 function refresh(){
-  applyAutoWeek();
   const info = getCurrentShiftInfo();
   const isMine = !!(myName && info.person && info.person.trim().toLowerCase() === myName.trim().toLowerCase());
   document.getElementById('shiftLabel').textContent = info.shiftLabel + " • " + info.dayName;
@@ -505,16 +430,7 @@ function renderTables(){
     const sched = getSchedule(w);
     let html = "<tr><th>Maalinka</th><th>8:30AM–2PM</th><th>2PM–8PM</th><th>Seexashada</th></tr>";
     for(const d of days){
-      if(isUnlocked){
-        html += `<tr id="row_${w}_${d}">
-          <td>${d}</td>
-          <td><input class="editCell" data-week="${w}" data-day="${d}" data-shift="maalin" value="${sched[d].maalin}"></td>
-          <td><input class="editCell" data-week="${w}" data-day="${d}" data-shift="galab" value="${sched[d].galab}"></td>
-          <td><input class="editCell" data-week="${w}" data-day="${d}" data-shift="habeen" value="${sched[d].habeen}"></td>
-        </tr>`;
-      } else {
-        html += `<tr id="row_${w}_${d}"><td>${d}</td><td>${sched[d].maalin}</td><td>${sched[d].galab}</td><td>${sched[d].habeen}</td></tr>`;
-      }
+      html += `<tr id="row_${w}_${d}"><td>${d}</td><td>${sched[d].maalin}</td><td>${sched[d].galab}</td><td>${sched[d].habeen}</td></tr>`;
     }
     document.getElementById('table'+w).innerHTML = html;
   }
@@ -564,8 +480,6 @@ function playBeep(times){
 
 function notify(title, body, isMine){
   if(Notification.permission !== 'granted') return;
-  // Prefer the Service Worker so the notification is more reliable when the
-  // tab is backgrounded, and so it survives even if this JS context stalls.
   const vibratePattern = isMine ? [250,120,250,120,250] : [200];
   if(navigator.serviceWorker){
     navigator.serviceWorker.ready.then(reg=>{
@@ -644,8 +558,8 @@ function scheduleBoundaryTimer(){
 // ---------- KEEP THE SERVICE WORKER'S COPY OF THE SCHEDULE UP TO DATE ----------
 // The Service Worker can outlive this page (and can wake up even when the
 // app/tab is fully closed, via periodic background sync), but it cannot read
-// localStorage. So every time the schedule or settings change, we push a copy
-// to the Service Worker to store for itself.
+// localStorage. So every time settings change, we push a copy to the Service
+// Worker to store for itself.
 function syncConfigToSW(){
   if(!('serviceWorker' in navigator)) return;
   navigator.serviceWorker.ready.then(reg=>{
@@ -653,7 +567,7 @@ function syncConfigToSW(){
       type: 'SYNC_CONFIG',
       config: {
         week: currentWeek,
-        customSchedule: customSchedule,
+        customSchedule: null,
         nightInterval: nightInterval,
         dayInterval: dayInterval,
         myName: myName
