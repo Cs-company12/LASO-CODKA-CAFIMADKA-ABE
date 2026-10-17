@@ -1,5 +1,6 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Jadwalka Ilmo iyo Waalidkiis</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1e4e8c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
 </head><body><style>
+[hidden]{display:none!important}
 /* Layout: one-column phone-first app; a sticky header with the person's name, today's shifts card, then both weeks. Alarm is a full-screen call overlay. */
 :root{
   --bg:#eef3f9; --card:#ffffff; --fg:#14213d; --muted:#5b6b85; --line:#dbe4f0;
@@ -41,10 +42,10 @@ h1{font-family:var(--display);font-size:1.15rem;margin:0;text-wrap:balance}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
 .dot.on{background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 25%,transparent)}
 .week{border-radius:16px;overflow:hidden;border:1px solid var(--line);margin-top:16px;background:var(--card)}
-.week .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;color:#fff;font-family:var(--display);font-weight:700}
+.week .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;flex-wrap:wrap;color:#fff;font-family:var(--display);font-weight:700}
 .week.w1 .hd{background:var(--w1)} .week.w2 .hd{background:var(--w2)}
 .week .hd .pill{background:rgba(255,255,255,.92);color:#14213d;border-radius:999px;padding:5px 10px;font-size:.78rem;white-space:nowrap}
-.week.active .hd::after{content:"Toddobaadkan";font-size:.72rem;background:#fff;color:#14213d;border-radius:999px;padding:3px 8px;margin-left:auto;margin-right:8px}
+.week.active .hd::after{content:"◉ Toddobaadkan";font-size:.72rem;background:#ffd166;color:#14213d;border-radius:999px;padding:3px 8px}
 .tbl{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:420px}
 th{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#fff;padding:8px 10px;text-align:left}
@@ -74,6 +75,8 @@ td .doc{font-weight:700}
 .call .ok{background:#22c55e;color:#06290f}.call .later{background:rgba(255,255,255,.18);color:#fff}
 .dl{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:14px 16px;border-radius:16px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#1e4e8c,#2b7bd1);font-family:var(--display);font-weight:700}
 .dl small{display:block;font-weight:400;opacity:.85;font-size:.78rem}
+.dl.ios{background:linear-gradient(135deg,#2b2b36,#5a5a6e)}
+.dl+.dl{margin-top:10px}
 /* name picker */
 .sheet{position:fixed;inset:0;background:rgba(10,18,36,.55);display:grid;place-items:end center;z-index:20;padding:0 max(16px,env(safe-area-inset-left,0px)) 0 max(16px,env(safe-area-inset-right,0px))}
 .sheet .in{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:720px;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:85%;overflow:auto}
@@ -167,9 +170,14 @@ button:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
 <a href="#" onclick="openSong();return false" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:16px;border-radius:16px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#2a1545,#8a3a5a 60%,#ff9a62);font-family:var(--display);font-weight:700;font-size:1.05rem"><span>🎵 Heesta "يا أَبي" — Aabbahay</span><span>▶</span></a>
 <div id="weeks"></div>
 <p class="chg">Isbeddel: Arbaco subax (8:30–2:00) iyo Arbaco habeen (Seexashada) → Ciise. Wax kale lama taaban.</p>
+<section class="card" id="dlBox" hidden>
+  <div class="eyebrow">Si uu u shaqeeyo marka app-ku xiran yahay</div>
+  <a class="dl" id="dlApk" href="https://github.com/Cs-company12/LASO-CODKA-CAFIMADKA-ABE/releases/latest/download/JadwalkaIlmo.apk"><span>🤖 Android — Soo deji APK<small>Shaashad buuxda + cod dheer xitaa taleefanku qufulan yahay</small></span><span>⬇️</span></a>
+  <a class="dl ios" id="dlIcs" href="#"><span>🍎 iPhone — Ku dar Kalandarka (.ics)<small>12 toddobaad oo shaqooyinkaaga ah + alaarm waqtiga saxda ah; riix ogeysiiska → call-ku wuu furmayaa</small></span><span>📅</span></a>
+  <p class="ios-help" style="font-size:.8rem;color:var(--muted);margin:10px 0 0;line-height:1.6">iPhone: 1) Riix badhanka 🍎 → Calendar wuu furmayaa → <b>Add All</b>. 2) Safari → Share → <b>Add to Home Screen</b> si app-ku u noqdo. 3) Settings → Notifications → Calendar → ogolow Sound. Waqtiga shaqada iPhone-ku wuu ku ogeysiinayaa, riix ogeysiiska → bogga ayaa furmaya oo call-ka tusaya.</p>
+</section>
 </div>
 
-<a class="dl" id="dlApk" href="https://github.com/Cs-company12/LASO-CODKA-CAFIMADKA-ABE/releases/latest/download/JadwalkaIlmo.apk" hidden><span>⬇️ Soo deji App-ka Android (APK)<small>Alaarmku wuxuu shaqeeyaa xitaa app-ku xiran yahay</small></span><span>APK</span></a>
 <div id="song" hidden><div class="wrap">
   <button type="button" id="backBtn" style="margin-top:14px;background:none;border:1px solid var(--gold);color:var(--gold);font-family:var(--kufi);padding:8px 14px;border-radius:10px;font-size:1rem">→ Jadwalka (dib u noqo)</button>
   <div class="stage" id="stage">
@@ -231,9 +239,9 @@ function cell(w,di,si){const n=BASE[di][si];return n===null?WEEKS[w].doc:n}
 function pad(n){return String(n).padStart(2,"0")}
 function fmt(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
 
-function myShifts(from,count){ // next shifts for me
+function myShifts(from,count,days=14){ // next shifts for me
   const out=[];let d=new Date(from);
-  for(let i=0;i<14&&out.length<count;i++){
+  for(let i=0;i<days&&out.length<count;i++){
     const di=dayIdx(d),w=weekIdx(d);
     SHIFTS.forEach((s,si)=>{const n=cell(w,di,si);if(n!==me)return;const t=new Date(d);t.setHours(s.h,s.mi,0,0);if(t>=from)out.push({t,s,di,key:t.toDateString()+s.k})});
     d.setDate(d.getDate()+1);d.setHours(0,0,0,0);
@@ -261,7 +269,7 @@ $("names").onclick=e=>{const b=e.target.closest("button");if(!b)return;me=b.data
 /* web fallback (browser / PWA) */
 const isApp=!!window.Android;
 if(!isApp){
-  $("dlApk").hidden=false;$("webArm").hidden=false;$("testBtn").hidden=false;
+  $("dlBox").hidden=false;$("webArm").hidden=false;$("testBtn").hidden=false;
   $("dot").classList.remove("on");$("statusTxt").textContent="Browser: alaarmku wuxuu shaqeeyaa inta boggu furan yahay. Riix \"Daar Alaarmka\". Si uu u shaqeeyo marka la xiro, soo deji APK-ga.";
   let ctx=null,ringTimer=null,wake=null,fired=new Set(),current=null,snoozed=null,snoozeUntil=0;
   function beep(f,d,at){const o=ctx.createOscillator(),g=ctx.createGain();o.type="square";o.frequency.value=f;g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(1,at+.02);g.gain.exponentialRampToValueAtTime(.0001,at+d);o.connect(g).connect(ctx.destination);o.start(at);o.stop(at+d+.05)}
@@ -282,6 +290,22 @@ if(!isApp){
     if(!$("call").hidden)return;const st=new Date(now);st.setHours(0,0,0,0);
     for(const x of myShifts(st,6)){const d=now-x.t;if(d>=0&&d<2*60e3&&!fired.has(x.key)){showCall(x);break}}},1000);
   document.addEventListener("visibilitychange",async()=>{if(document.visibilityState==="visible"&&ctx){try{wake=await navigator.wakeLock.request("screen")}catch(e){}}});
+  // iPhone: .ics kalandar
+  const SITE="https://cs-company12.github.io/LASO-CODKA-CAFIMADKA-ABE/";
+  function icsDate(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(d.getHours())+pad(d.getMinutes())+"00"}
+  function buildIcs(){const st=new Date();st.setHours(0,0,0,0);const dur={m:"PT5H30M",a:"PT6H",n:"PT12H"};
+    let out=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//C.S Company//Jadwalka Ilmo//SO","CALSCALE:GREGORIAN","X-WR-CALNAME:Jadwalka Ilmo - "+me];
+    myShifts(st,60,84).forEach((x,i)=>{out.push("BEGIN:VEVENT","UID:jadwal-"+x.key.replace(/\W/g,"")+"@cs-company","DTSTAMP:"+icsDate(new Date())+"Z","DTSTART:"+icsDate(x.t),"DURATION:"+dur[x.s.k],
+      "SUMMARY:\uD83D\uDD14 Shaqo: "+x.s.lbl+" \u2014 "+me,"DESCRIPTION:Waqtigaaga shaqo ("+x.s.t+"). Fur: "+SITE,"URL:"+SITE,
+      "BEGIN:VALARM","TRIGGER:PT0S","ACTION:DISPLAY","DESCRIPTION:Waqtigaaga shaqo - "+x.s.lbl,"END:VALARM",
+      "BEGIN:VALARM","TRIGGER:-PT10M","ACTION:DISPLAY","DESCRIPTION:10 daqiiqo ka hor shaqadaada","END:VALARM","END:VEVENT")});
+    out.push("END:VCALENDAR");return out.join("\r\n")}
+  $("dlIcs").onclick=e=>{e.preventDefault();if(!me){$("sheet").hidden=false;return}
+    const blob=new Blob([buildIcs()],{type:"text/calendar;charset=utf-8"});const u=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=u;a.download="jadwalka-"+me.replace(/\s+/g,"-")+".ics";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)};
+  // Bogga marka la furo waqtiga shaqada (ogeysiiska kalandarka) -> call toos ah
+  setTimeout(()=>{if(!me)return;const now=new Date(),st=new Date(now);st.setHours(0,0,0,0);
+    for(const x of myShifts(st,6)){const d=now-x.t;if(d>=0&&d<15*60e3&&!fired.has(x.key)){showCall(x);$("webArm").hidden=true;break}}},600);
   // PWA
   if("serviceWorker" in navigator&&location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{})}
   let deferred=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;$("installBtn").hidden=false});
