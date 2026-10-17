@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:gravity="center" android:background="#0B1A33" android:padding="28dp">
+    <TextView android:id="@+id/avatar" android:layout_width="140dp" android:layout_height="140dp"
+        android:background="@drawable/circle" android:gravity="center" android:textColor="#1E4E8C" android:textSize="56sp" android:textStyle="bold" android:text="C"/>
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp"
+        android:text="●  WAQTIGAAGA SHAQO" android:textColor="#9FC3F0" android:letterSpacing="0.15" android:textSize="13sp"/>
+    <TextView android:id="@+id/name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp"
+        android:textColor="#FFFFFF" android:textSize="34sp" android:textStyle="bold" android:text="Ciise"/>
+    <TextView android:id="@+id/shift" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+        android:textColor="#DCE8F7" android:textSize="18sp" android:text="Subax · 8:30 AM – 2:00 PM"/>
+    <TextView android:id="@+id/time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp"
+        android:textColor="#FFFFFF" android:textSize="48sp" android:textStyle="bold" android:text="08:30"/>
+    <TextView android:id="@+id/day" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:textColor="#DCE8F7" android:textSize="18sp" android:text="Arbaco"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="56dp" android:gravity="center">
+        <Button android:id="@+id/snooze" android:layout_width="0dp" android:layout_weight="1" android:layout_height="60dp"
+            android:text="5 daqiiqo dib" android:textAllCaps="false" android:textColor="#FFFFFF" android:backgroundTint="#2A4470"/>
+        <Space android:layout_width="14dp" android:layout_height="1dp"/>
+        <Button android:id="@+id/ok" android:layout_width="0dp" android:layout_weight="1" android:layout_height="60dp"
+            android:text="✓ Waan ogahay" android:textAllCaps="false" android:textStyle="bold" android:textColor="#06290F" android:backgroundTint="#22C55E"/>
+    </LinearLayout>
+</LinearLayout>
