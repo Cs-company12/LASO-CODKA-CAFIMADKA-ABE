@@ -23,7 +23,7 @@ class AlarmService : Service() {
         val time = intent?.getStringExtra("time") ?: ""
         createChannel()
         val full = Intent(this, AlarmActivity::class.java).apply {
-            putExtras(intent ?: Intent()); flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtras(intent ?: Intent()); addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         val fullPi = PendingIntent.getActivity(this, 1, full, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val stopPi = PendingIntent.getService(this, 2, Intent(this, AlarmService::class.java).setAction("STOP"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
