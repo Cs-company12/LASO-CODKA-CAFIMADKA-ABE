@@ -13,17 +13,85 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: U dhig faylasha meelahooda (flat → Android structure)
+        run: |
+          set -e
+          if [ ! -d app/src/main ]; then
+            mkdir -p app/src/main/java/com/cs/jadwal app/src/main/res/layout app/src/main/res/values app/src/main/res/drawable app/src/main/res/mipmap-anydpi-v26 app/src/main/assets
+            for f in AlarmActivity.kt AlarmReceiver.kt AlarmService.kt BootReceiver.kt MainActivity.kt Schedule.kt Scheduler.kt; do [ -f "$f" ] && git mv -f "$f" app/src/main/java/com/cs/jadwal/; done
+            [ -f AndroidManifest.xml ] && git mv -f AndroidManifest.xml app/src/main/
+            [ -f activity_alarm.xml ] && git mv -f activity_alarm.xml app/src/main/res/layout/
+            for f in styles.xml colors.xml; do [ -f "$f" ] && git mv -f "$f" app/src/main/res/values/; done
+            for f in circle.xml ic_bell.xml ic_launcher_fg.xml; do [ -f "$f" ] && git mv -f "$f" app/src/main/res/drawable/; done
+            [ -f ic_launcher.xml ] && git mv -f ic_launcher.xml app/src/main/res/mipmap-anydpi-v26/
+            [ -f index.html ] && git mv -f index.html app/src/main/assets/
+            [ -f build.yml ] && git rm -q -f build.yml
+          fi
+          cat > settings.gradle.kts <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+          rootProject.name = "JadwalkaIlmo"
+          include(":app")
+          EOF
+          cat > build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application") version "8.5.2" apply false
+              id("org.jetbrains.kotlin.android") version "2.0.20" apply false
+          }
+          EOF
+          cat > gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2048m
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          EOF
+          cat > app/build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+          android {
+              namespace = "com.cs.jadwal"
+              compileSdk = 35
+              defaultConfig {
+                  applicationId = "com.cs.jadwal"
+                  minSdk = 26
+                  targetSdk = 35
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+              buildTypes { release { isMinifyEnabled = false } }
+              compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+              kotlinOptions { jvmTarget = "17" }
+          }
+          dependencies {
+              implementation("androidx.core:core-ktx:1.13.1")
+              implementation("androidx.appcompat:appcompat:1.7.0")
+              implementation("androidx.webkit:webkit:1.11.0")
+          }
+          EOF
+          ls -R app | head -50
+
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '17' }
+        with:
+          distribution: temurin
+          java-version: '17'
       - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v3
-        with: { gradle-version: '8.9' }
+        with:
+          gradle-version: '8.9'
+
       - name: Build APK
         run: gradle assembleDebug --no-daemon
+
       - name: Rename
         run: cp app/build/outputs/apk/debug/app-debug.apk JadwalkaIlmo.apk
+
       - uses: actions/upload-artifact@v4
-        with: { name: JadwalkaIlmo-apk, path: JadwalkaIlmo.apk }
+        with:
+          name: JadwalkaIlmo-apk
+          path: JadwalkaIlmo.apk
+
       - name: Release (download link)
         uses: softprops/action-gh-release@v2
         with:
