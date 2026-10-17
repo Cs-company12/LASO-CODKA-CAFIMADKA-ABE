@@ -169,7 +169,7 @@ button:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
 
 <a href="#" onclick="openSong();return false" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:16px;border-radius:16px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#2a1545,#8a3a5a 60%,#ff9a62);font-family:var(--display);font-weight:700;font-size:1.05rem"><span>🎵 Heesta "يا أَبي" — Aabbahay</span><span>▶</span></a>
 <div id="weeks"></div>
-<p class="chg">Isbeddel: Arbaco subax (8:30–2:00) iyo Arbaco habeen (Seexashada) → Ciise. Wax kale lama taaban.</p>
+<p class="chg">Isbeddel: Arbaco subax (8:30–2:00) iyo Arbaco habeen (Seexashada) → Ciise. Maalinta jadwalku waxay bilaabataa 6:00 PM: Seexashada 8:00 PM waxay raacdaa maalinta xigta (tusaale: habeenka Khamiista 8:00 PM = safka Jimce).</p>
 <section class="card" id="dlBox" hidden>
   <div class="eyebrow">Si uu u shaqeeyo marka app-ku xiran yahay</div>
   <a class="dl" id="dlApk" href="https://github.com/Cs-company12/LASO-CODKA-CAFIMADKA-ABE/releases/latest/download/JadwalkaIlmo.apk"><span>🤖 Android — Soo deji APK<small>Shaashad buuxda + cod dheer xitaa taleefanku qufulan yahay</small></span><span>⬇️</span></a>
@@ -233,6 +233,9 @@ let me=(window.Android&&Android.getName())||ls.get("me")||"";
 const $=id=>document.getElementById(id);
 
 function dayIdx(d){return (d.getDay()+1)%7} // Sat=0
+// Maalinta jadwalka waxay bilaabataa 6:00 PM: 6:00 PM kadib waa maalinta xigta (habeenku wuxuu raacaa maalinta dambe)
+const DAY_START_H=18;
+function rosterOf(d){const e=new Date(d);if(e.getHours()>=DAY_START_H)e.setDate(e.getDate()+1);e.setHours(12,0,0,0);return {di:dayIdx(e),w:weekIdx(e),date:e}}
 function weekIdx(d){const sat=new Date(d);sat.setHours(0,0,0,0);sat.setDate(sat.getDate()-dayIdx(d));const w=Math.round((sat-REF)/(7*864e5));return ((w%2)+2)%2}
 function cell(w,di,si){const n=BASE[di][si];return n===null?WEEKS[w].doc:n}
 function pad(n){return String(n).padStart(2,"0")}
@@ -241,19 +244,21 @@ function fmt(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
 function myShifts(from,count,days=14){ // next shifts for me
   const out=[];let d=new Date(from);
   for(let i=0;i<days&&out.length<count;i++){
-    const di=dayIdx(d),w=weekIdx(d);
-    SHIFTS.forEach((s,si)=>{const n=cell(w,di,si);if(n!==me)return;const t=new Date(d);t.setHours(s.h,s.mi,0,0);if(t>=from)out.push({t,s,di,key:t.toDateString()+s.k})});
+    const day=rosterOf(new Date(d.getFullYear(),d.getMonth(),d.getDate(),12));          // subax/galab: safka maalintan
+    const nite=rosterOf(new Date(d.getFullYear(),d.getMonth(),d.getDate(),DAY_START_H)); // habeenka 8:00 PM: safka maalinta xigta
+    SHIFTS.forEach((s,si)=>{const r=s.k==="n"?nite:day;const n=cell(r.w,r.di,si);if(n!==me)return;const t=new Date(d);t.setHours(s.h,s.mi,0,0);if(t>=from)out.push({t,s,di:r.di,key:t.toDateString()+s.k})});
     d.setDate(d.getDate()+1);d.setHours(0,0,0,0);
   }
   return out.sort((a,b)=>a.t-b.t);
 }
 
 function render(){
-  const now=new Date(),di=dayIdx(now),w=weekIdx(now);
+  const now=new Date(),R=rosterOf(now),di=R.di,w=R.w;
+  const N=rosterOf(new Date(now.getFullYear(),now.getMonth(),now.getDate(),DAY_START_H)); // safka habeenkan
   $("whoName").textContent=me||"Dooro magacaaga";$("whoAv").textContent=me?me[0]:"?";
-  $("todayDate").textContent="Maanta · "+now.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})+" · "+WEEKS[w].name;
-  $("todayDay").textContent=DAYS[di];
-  $("todayShifts").innerHTML=SHIFTS.map((s,si)=>{const n=cell(w,di,si);return `<div class="shift ${n===me?"mine":""}"><span class="t">${s.t.split(" –")[0]}</span><span><div class="n">${n}</div><div class="lbl">${s.lbl} · ${s.t}</div></span></div>`}).join("");
+  $("todayDate").textContent=(now.getHours()>=DAY_START_H?"Habeenkan (6:00 PM kadib) · ":"Maanta · ")+now.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" · "+WEEKS[w].name;
+  $("todayDay").innerHTML=DAYS[di]+' <span id="clock" style="float:right;font-variant-numeric:tabular-nums;color:var(--accent)">'+fmt(now)+'</span>';
+  $("todayShifts").innerHTML=SHIFTS.map((s,si)=>{const r=s.k==="n"?N:R;const n=cell(r.w,r.di,si);const extra=s.k==="n"?` · caawa (habeenka ${DAYS[r.di]})`:"";return `<div class="shift ${n===me?"mine":""}"><span class="t">${s.t.split(" –")[0]}</span><span><div class="n">${n}</div><div class="lbl">${s.lbl} · ${s.t}${extra}</div></span></div>`}).join("");
   const nx=myShifts(now,1)[0];
   $("nextInfo").textContent=!me?"Dooro magacaaga":nx?`${DAYS[nx.di]} ${fmt(nx.t)} · ${nx.s.lbl}`:"Ma jirto";
   $("weeks").innerHTML=WEEKS.map((wk,wi)=>`<section class="week ${wk.cls} ${wi===w?"active":""}"><div class="hd"><span>${wk.name}</span><span class="pill">Habeenka Jimcaha: ${wk.doc}</span></div><div class="tbl"><table><thead><tr><th>Maalinta</th>${SHIFTS.map(s=>`<th>${s.k==="n"?"Seexashada":s.t}</th>`).join("")}</tr></thead><tbody>${DAYS.map((dn,dI)=>`<tr class="${wi===w&&dI===di?"today":""}"><td>${dn}</td>${SHIFTS.map((s,si)=>{const n=cell(wi,dI,si);const isDoc=BASE[dI][si]===null;return `<td><span class="${n===me?"me":isDoc?"doc":""}">${n}</span></td>`}).join("")}</tr>`).join("")}</tbody></table></div></section>`).join("");
@@ -316,7 +321,7 @@ $("armBtn").onclick=()=>{try{Android.openExactSettings()}catch(e){}};
 $("testBtn").onclick=()=>{if(isApp){try{Android.test()}catch(e){}}else window.webTest()};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")chk()});
 chk();
-setInterval(render,60e3);
+setInterval(render,60e3);setInterval(()=>{const c=document.getElementById("clock");if(c)c.textContent=fmt(new Date())},1000);
 render();
 if(!me)$("sheet").hidden=false;
 </script>
